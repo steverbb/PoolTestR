@@ -113,6 +113,7 @@ PoolRegBayes <- function (formula, data, poolSize,
                                            cloglog = stancode_pool_bernoulli_cloglog,
                                            stop('Invalid link function. Options are logit, log, loglogit, or cloglog')),
                             block = "functions")
+  # modify this, add another argument and switch function, pass it in custom gp, try some example data
 
   if(is.null(prior) | !("b" %in% prior$class)){ #if there is no supplied prior on the population-level ('fixed') effects
     if("b" %in% brms::get_prior(formula, data, family)$class){ #if there are population-level ('fixed') effects in the model
