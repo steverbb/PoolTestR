@@ -26,3 +26,15 @@ Stan Development Team (2019). RStan: the R interface to Stan. R package version 
 
 Paul-Christian Bürkner (2017). brms: An R Package for Bayesian Multilevel Models Using Stan. Journal of Statistical Software, 80(1), 1-28. <DOI:10.18637/jss.v080.i01>
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/AngusMcLure/PoolTestR}
+  \item Report bugs at \url{https://github.com/AngusMcLure/PoolTestR}
+}
+
+}
+\author{
+\strong{Maintainer}: Angus McLure \email{angus.mclure@anu.edu.au} (\href{https://orcid.org/0000-0003-2551-3059}{ORCID})
+
+}

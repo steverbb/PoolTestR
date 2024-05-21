@@ -12,6 +12,7 @@ PoolRegBayes(
   link = "logit",
   prior = NULL,
   cores = NULL,
+  kernel = "quad_exp",
   ...
 )
 }
@@ -46,6 +47,8 @@ Custom priors must be \code{brmsprior} objects produced by
 \code{\link[brms:set_prior]{brms::set_prior}}}
 
 \item{cores}{The number of CPU cores to be used. By default one core is used}
+
+\item{kernel}{edit it.}
 
 \item{...}{Additional arguments to be passed to \code{brms::brms}.}
 }

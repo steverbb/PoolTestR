@@ -48,3 +48,16 @@ BayesMod <- PoolRegBayes(Result ~ Region + Year,
                          poolSize = NumInPool)
 summary(BayesMod)
 getPrevalence(BayesMod) #Bayesian model
+
+
+# testing
+library(devtools)
+load_all(path = "/Users/gifted/Desktop/ANU/RA/brms")
+dat <- mgcv::gamSim(1, n = 30, scale = 2)
+fit1 <- brm(y ~ gp(x0, cov = "exp") + x1 + gp(x2) + x3 , data = dat, chains = 2)
+load_all()
+document()
+fit2 <- PoolRegBayes(Result ~ Region + Year + gp(NumInPool) + gp(NumInPool, cov="exp"),
+                                 data = SimpleExampleData,
+                                 poolSize = NumInPool)
+

@@ -25,6 +25,7 @@
 #'   function so that parameters are (log) prevalence/rate ratios as long as
 #'   predicted prevalence is <0.8 (for details see Clark and Barr, Stat Methods
 #'   Med Res (2018) <DOI:10.1177/0962280217698174>)
+#' @param kernel edit it.
 #' @param prior The priors to be used for the regression parameters. Defaults to
 #'   a non-informative (normal(0,100)) prior on linear coefficients and a
 #'   zero-truncated student-t prior on the group effect standard deviations.
@@ -51,7 +52,7 @@
 #'
 
 PoolRegBayes <- function (formula, data, poolSize,
-                          link = 'logit', prior = NULL, cores = NULL, ...){
+                          link = 'logit', prior = NULL, cores = NULL, kernel = 'quad_exp', ...){
   poolSize <- enquo(poolSize)
   AllVars <- all.vars(formula)
   PoolSizeName <- as_label(poolSize)
@@ -106,12 +107,18 @@ PoolRegBayes <- function (formula, data, poolSize,
                    cloglog = pool_bernoulli_cloglog,
                    stop('Invalid link function. Options are logit, log, loglogit, or cloglog'))
 
-  stanvars <- brms::stanvar(scode = switch(link,
+  stanvars <- brms::stanvar(scode = paste(switch(link,
                                            logit = stancode_pool_bernoulli_logit,
                                            log = stancode_pool_bernoulli_log,
                                            loglogit = stancode_pool_bernoulli_loglogit,
                                            cloglog = stancode_pool_bernoulli_cloglog,
-                                           stop('Invalid link function. Options are logit, log, loglogit, or cloglog')),
+                                           stop('Invalid link function. Options are logit, log, loglogit, or cloglog'))
+                                           #,switch(kernel,
+                                           #exp = stancode_kernel_exp,
+                                           #quad_exp = stancode_kernel_quad_exp,
+                                           #stop('Invalid kernel function. Options are exp, or quad_exp')),
+                                           #sep = "\n"
+                                          ),
                             block = "functions")
   # modify this, add another argument and switch function, pass it in custom gp, try some example data
 
@@ -381,6 +388,53 @@ stancode_pool_bernoulli_cloglog <- "
     }
     "
 
+## added
+## stancode for custom kernels
+
+stancode_kernel_exp <- "
+  vector gp(data array[] vector x, real sdgp, vector lscale, vector zgp) {
+    int Dls = rows(lscale);
+    int N = size(x);
+    matrix[N, N] cov;
+    if (Dls == 1) {
+      // one dimensional or isotropic GP
+      cov = gp_exponential_cov(x, sdgp, lscale[1]);
+    } else {
+      // multi-dimensional non-isotropic GP
+      cov = gp_exponential_cov(x[, 1], sdgp, lscale[1]);
+      for (d in 2:Dls) {
+        cov = cov .* gp_exponential_cov(x[, d], 1, lscale[d]); //a .* is element-wise multiplication
+      }
+    }
+    for (n in 1:N) {
+      // deal with numerical non-positive-definiteness
+      cov[n, n] += 1e-12;
+    }
+    return cholesky_decompose(cov) * zgp;
+  }
+  "
+stancode_kernel_exp_quad <- "
+  vector gp(data array[] vector x, real sdgp, vector lscale, vector zgp) {
+    int Dls = rows(lscale);
+    int N = size(x);
+    matrix[N, N] cov;
+    if (Dls == 1) {
+      // one dimensional or isotropic GP
+      cov = gp_exp_quad_cov(x, sdgp, lscale[1]);
+    } else {
+      // multi-dimensional non-isotropic GP
+      cov = gp_exp_quad_cov(x[, 1], sdgp, lscale[1]);
+      for (d in 2:Dls) {
+        cov = cov .* gp_exp_quad_cov(x[, d], 1, lscale[d]);
+      }
+    }
+    for (n in 1:N) {
+      // deal with numerical non-positive-definiteness
+      cov[n, n] += 1e-12;
+    }
+    return cholesky_decompose(cov) * zgp;
+  }
+  "
 
 #custom families
 
@@ -407,3 +461,4 @@ pool_bernoulli_cloglog <- brms::custom_family(
   links = c("identity"),
   type = "int", vars = "vint1[n]"
 )
+
